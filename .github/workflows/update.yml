@@ -1,0 +1,53 @@
+name: Update
+
+on:
+  #watch:
+  #  types: [started]
+  #schedule:
+  #  - cron: 0 21 1 * *
+  workflow_dispatch:
+  schedule:
+    - cron: 0 21 1 * *
+    # inputs:
+    #   logLevel:
+    #     description: 'Log level'
+    #     required: true
+    #     default: 'warning'
+    #   tags:
+    #     description: 'Manual trigger'
+    #     required: false
+env:
+  TZ: Asia/Shanghai
+
+jobs:
+  Update:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: GetTime
+      id: date
+      run: echo "::set-output name=date::$(date +'%Y-%m-%d %H:%M:%S CST')"
+      
+    - name: Update
+      run: |
+        wget https://github.com/fanmingming/live/raw/refs/heads/main/tv/m3u/ipv6.m3u -O diy-fanmingming-live.m3u
+        sed -i '2e cat diy.m3u' diy-fanmingming-live.m3u
+        # sed -i 's|https\?://|https://cfp.zkitefly.eu.org/|g' diy-fanmingming-live.m3u
+        
+
+    - name: Clean
+      run: |
+        git config --local user.email "github-actions[bot]@users.noreply.github.com"
+        git config --local user.name "github-actions[bot]"
+        git checkout --orphan latest_branch
+        git add .
+        git commit -m "${{ steps.date.outputs.date }}"
+        git branch -D main
+        git branch -m main
+        
+    - name: Push
+      run: |
+        git push -f origin main
+        
